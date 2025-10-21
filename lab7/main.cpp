@@ -5,6 +5,7 @@
 #include <limits.h>
 #include <random>
 #include <stack>
+#include <chrono>
 using namespace std;
 
 struct p_node
@@ -97,7 +98,7 @@ stack<pair<long long, long long>> backtrack(vector<vector<long long>> &matrix, v
         }
     }
 
-    cout << min_cost_node.cost << endl;
+    //cout << min_cost_node.cost << endl;
    
     p_node* current = &min_cost_node;
     int row = path.size();
@@ -116,29 +117,104 @@ stack<pair<long long, long long>> backtrack(vector<vector<long long>> &matrix, v
 }
 
 
-int main(){
-    int n, m;
-    cin >> n >> m;
-    vector<vector<long long>> matrix(n, vector<long long>(m, 0));    
-    vector<vector<p_node>> path(n, vector<p_node>(m));
-    stack<pair<long long, long long>> result;
-    for (size_t i = 0; i < n; i++)
-    {
-        for (size_t j = 0; j < m; j++)
-        {
-            long long cost;
-            cin >> cost;
-            matrix[i][j] = cost;
+
+#include <chrono>
+
+vector<vector<long long>> generateTestMatrix(int n, int m) {
+    vector<vector<long long>> matrix(n, vector<long long>(m));
+    random_device rd;
+    mt19937 gen(rd());
+    uniform_int_distribution<long long> dis(1, 100);
+    
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < m; j++) {
+            matrix[i][j] = dis(gen);
         }
     }
+    return matrix;
+}
 
-    path_init(matrix, path);
-    forward(matrix, path);
-    result = backtrack(matrix, path);
+// Рекурсивная функция для поиска минимального штрафа
+void findMinPenalty(const vector<vector<long long>>& matrix, int row, int col, 
+                   int currentPenalty, int& minPenalty, 
+                   int n, int m) {
+    // Добавляем штраф за текущую клетку
+    currentPenalty += matrix[row][col];
     
-    while (!result.empty()) {
-        cout << result.top() << " ";
-        result.pop();
+    // Если достигли последней строки, обновляем минимальный штраф
+    if (row == n - 1) {
+        if (currentPenalty < minPenalty) {
+            minPenalty = currentPenalty;
+        }
+        return;
     }
+    
+    // Рекурсивно перебираем все возможные переходы в следующей строке
+    for (int dc = -1; dc <= 1; dc++) {
+        int newCol = col + dc;
+        // Проверяем, что новая колонка в пределах матрицы
+        if (newCol >= 0 && newCol < m) {
+            findMinPenalty(matrix, row + 1, newCol, currentPenalty, minPenalty, n, m);
+        }
+    }
+}
+
+int findMinTotalPenalty(const vector<vector<long long>>& matrix) {
+    int n = matrix.size();
+    if (n == 0) return 0;
+    int m = matrix[0].size();
+    if (m == 0) return 0;
+    
+    int minPenalty = INT_MAX;
+    
+    // Перебираем все стартовые позиции в первой строке
+    for (int startCol = 0; startCol < m; startCol++) {
+        findMinPenalty(matrix, 0, startCol, 0, minPenalty, n, m);
+    }
+    
+    return minPenalty;
+}
+
+
+int main(){
+
+    for (int i = 1; i < 7; i++)
+    {
+        int n = 10 * int(pow(10, i)), m = 10 * int(pow(10, i));
+        vector<vector<long long>> matrix = generateTestMatrix(n, m);    
+        vector<vector<p_node>> path(n, vector<p_node>(m));
+        stack<pair<long long, long long>> result;
+
+        cout << "===>   MATRIX (" << n << "," << m << ")   <===" << endl;
+
+
+        auto dynamic_start = chrono::high_resolution_clock::now();
+        path_init(matrix, path);
+        forward(matrix, path);
+        result = backtrack(matrix, path);
+
+        auto dynamic_finish = chrono::high_resolution_clock::now();
+
+        chrono::duration<double> dynamic = dynamic_finish - dynamic_start;
+        cout << "DYNAMIC: " << dynamic.count() << endl;
+        
+
+        
+        // auto force_start = chrono::high_resolution_clock::now();
+
+        // int br = findMinTotalPenalty(matrix);
+        // //cout << br << endl;
+
+        // auto force_finish = chrono::high_resolution_clock::now();
+
+        // chrono::duration<double> force = force_finish - force_start;
+        // cout << "FORCE: " << force.count() << endl;
+        cout << endl;
+
+
+    }
+    
+    
+
     cout << endl;
 }
