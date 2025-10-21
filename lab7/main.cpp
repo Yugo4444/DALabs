@@ -1,0 +1,144 @@
+#include <iostream>
+#include <unordered_map>
+#include <string>
+#include <vector>
+#include <limits.h>
+#include <random>
+#include <stack>
+using namespace std;
+
+struct p_node
+{
+    p_node* _from = nullptr;
+    long long cost = LLONG_MAX;
+    int pos = -1;
+};
+
+
+std::ostream& operator<<(std::ostream& os, const p_node &p) {
+    os << p.cost;
+    return os;
+}
+
+std::ostream& operator<<(std::ostream& os, const pair<long long, long long> &p) {
+    os << "(" << p.first << "," << p.second<< ")";
+    return os;
+}
+
+template<typename T>
+void matrix_print(vector<vector<T>> &matrix){
+    for (size_t i = 0; i < matrix.size(); i++)
+    {
+        for (size_t j = 0; j < matrix[0].size(); j++)
+        {
+            cout << matrix[i][j] << " ";
+        }
+        cout << endl;
+    }
+}
+
+
+void path_init(vector<vector<long long>> &matrix, vector<vector<p_node>> &path){
+    for (int j = 0; j < matrix[0].size(); j++)
+    {
+        p_node first_row_node = {nullptr, matrix[0][j], j};
+        path[0][j] = first_row_node;
+    }
+    
+    for (size_t i = 1; i < matrix.size(); i++)
+    {
+        for (int j = 0; j < matrix[0].size(); j++)
+        {
+            p_node empty_node = {nullptr, LLONG_MAX, j};
+            path[i][j] = empty_node;
+        }
+    }
+}
+
+void path_update(p_node &from_node, p_node &to_node, long long plus){
+    long long new_cost = from_node.cost + plus;
+    if (new_cost < to_node.cost){
+        to_node.cost = new_cost;
+        to_node._from = &from_node;
+    }
+}
+
+void forward(vector<vector<long long>> &matrix, vector<vector<p_node>> &path){
+    int n = matrix.size();
+    int m = matrix[0].size();
+    for (size_t i = 0; i < n - 1; i++)
+    {
+        for (size_t j = 0; j < m; j++)
+        {
+            if (j == 0){
+                path_update(path[i][0], path[i+1][0], matrix[i+1][0]);
+                path_update(path[i][0], path[i+1][1], matrix[i+1][1]);
+            } else if (j == (m - 1)){
+                path_update(path[i][m - 1], path[i+1][m - 2], matrix[i+1][m - 2]);
+                path_update(path[i][m - 1], path[i+1][m - 1], matrix[i+1][m - 1]);
+            } else {
+                path_update(path[i][j], path[i+1][j - 1], matrix[i+1][j - 1]);
+                path_update(path[i][j], path[i+1][j], matrix[i+1][j]);
+                path_update(path[i][j], path[i+1][j + 1], matrix[i+1][j + 1]);
+            }
+        }
+    }
+}
+
+stack<pair<long long, long long>> backtrack(vector<vector<long long>> &matrix, vector<vector<p_node>> &path){
+
+    p_node min_cost_node;
+
+    for (size_t j = 0; j < path[0].size(); j++)
+    {
+        p_node check = path[path.size() - 1][j];
+        if (check.cost < min_cost_node.cost){
+            min_cost_node = check;
+        }
+    }
+
+    cout << min_cost_node.cost << endl;
+   
+    p_node* current = &min_cost_node;
+    int row = path.size();
+    stack<pair<long long, long long>> result;
+
+    while(row != 0){
+        pair<long long, long long> point;
+        point.first = row;
+        point.second = current->pos + 1;
+        result.push(point);
+        row -= 1;
+        current = current->_from;
+    }
+
+    return result;
+}
+
+
+int main(){
+    int n, m;
+    cin >> n >> m;
+    vector<vector<long long>> matrix(n, vector<long long>(m, 0));    
+    vector<vector<p_node>> path(n, vector<p_node>(m));
+    stack<pair<long long, long long>> result;
+    for (size_t i = 0; i < n; i++)
+    {
+        for (size_t j = 0; j < m; j++)
+        {
+            long long cost;
+            cin >> cost;
+            matrix[i][j] = cost;
+        }
+    }
+
+    path_init(matrix, path);
+    forward(matrix, path);
+    result = backtrack(matrix, path);
+    
+    while (!result.empty()) {
+        cout << result.top() << " ";
+        result.pop();
+    }
+    cout << endl;
+}

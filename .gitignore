@@ -1,0 +1,39 @@
+# Build artifacts
+*.o
+*.obj
+*.exe
+*.dll
+*.lib
+*.so
+*.a
+*.ilk
+*.pdb
+*.exp
+*.idb
+
+# Visual Studio Code specific files
+.vscode/
+
+# Visual Studio (if also used)
+.vs/
+*.VC.db
+*.VC.opendb
+*.vcxproj.user
+*.vcxproj.filters
+*.sln.ide
+*.suo
+
+# CMake build files (if using CMake)
+build/
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+CTestTestfile.cmake
+_CPack_Packages/
+
+# Other common temporary files
+*~
+*.bak
+*.swp
+*.tmp
+*.log
